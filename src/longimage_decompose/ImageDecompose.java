@@ -2,8 +2,10 @@ package longimage_decompose;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.Set;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -81,19 +83,23 @@ public class ImageDecompose implements Runnable {
         boolean prevXIsWhite = true;
         for (; x < w; x++) {
             boolean currentIsWhite = true;
+            Set<Integer> pixels = new HashSet<Integer>();
             for (int y = rect.top; y < rect.bottom; y++) {
                 int pixel = image.getRGB(x, y);
+                pixels.add(pixel);
                 if (pixel != -1) {
                     currentIsWhite = false;
                 }
             }
+            
 
             if (!currentIsWhite && prevXIsWhite) {
                 rect.left = x;
-//                System.out.println("line is left:" + x);
-            } else if (currentIsWhite && !prevXIsWhite) {
+            } else if ((currentIsWhite && !prevXIsWhite) 
+                    || (rect.left != -1 && pixels.size()*100/(rect.bottom -rect.top) < 5)
+                    ) {//only one color count as end line
                 rect.right = x;
-//                System.out.println("line is right:" + x);
+//                if(pixels.size()>1)System.out.println("column is right:"+x+", color size:"+pixels.size());
                 return rect;
             }
 
@@ -109,8 +115,10 @@ public class ImageDecompose implements Runnable {
 
         for (; y < h; y++) {
             boolean currentIsWhite = true;
+            Set<Integer> pixels = new HashSet<Integer>();
             for (int x = 0; x < w; x++) {
                 int pixel = image.getRGB(x, y);
+                pixels.add(pixel);
 //                printPixelARGB(pixel);
 //                System.out.println("x,y: " + x + ", " + y+","+pixel);
                 if (pixel != -1) {
@@ -120,9 +128,11 @@ public class ImageDecompose implements Runnable {
 
             if (!currentIsWhite && prevYIsWhite) {
                 rect.top = y;
-            } else if (currentIsWhite && !prevYIsWhite) {
+            } else if ((currentIsWhite && !prevYIsWhite) 
+                    || (rect.top != -1 && pixels.size()*100/w < 5)
+                    ) {//only one color count as end line
                 rect.bottom = y;
-//                System.out.println("line is bottom:" + y);
+//                System.out.println("line is bottom:"+y+", color size:"+pixels.size());
                 return rect;
             }
 
